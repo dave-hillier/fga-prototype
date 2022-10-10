@@ -16,8 +16,11 @@ public class PermissionSystemTests
         Assert.True(system.Check(new User.UserId("kuba"), 
             "editor", 
             new RelationObject("doc", "123")));
+        Assert.False(system.Check(new User.UserId("dave"), 
+            "editor", 
+            new RelationObject("doc", "123")));        
     }
-    
+
     [Fact]
     public void FolderOwnerIsEditor()
     {
@@ -37,6 +40,8 @@ public class PermissionSystemTests
         Assert.True(system.Check(new User.UserId("dave"), 
             "viewer", 
             new RelationObject("doc", "123")));
+        Assert.False(system.Check(new User.UserId("andrew"), 
+            "viewer", 
+            new RelationObject("doc", "123")));        
     }
-    // TODO: recursive, multiple relations, something other than owner
 }

@@ -59,35 +59,33 @@ public class PermissionSystem
             Relationships.FirstOrDefault(r => r.Name == relation);
         
         if (rel == null)
-            throw new Exception($"Unknown relation {relation}");
+            throw new Exception($"Unknown relation: {relation}");
   
-        var subjectSet = (from t in _memberToGroup
+        var userSet = (from t in _memberToGroup
             where t.User == user
             select (t.Object, t.Relation)).ToArray();
-
+        
+        if (userSet.Contains((@object, relation)))
+            return true;
+        
         if (rel.Union != null)
         {
-            var subjectSet2 = from t in subjectSet
-                where t.Relation == rel.Union.Name
-                select (t.Object, relation);
-            subjectSet = subjectSet2.Concat(subjectSet).ToArray();
+            userSet = ComputerUserSet(relation, userSet, rel.Union.Name).
+                Concat(userSet).
+                ToArray();
         }
 
         if (rel.Lookup.HasValue)
         {
-            var parent = (from t in _memberToGroup
-                where t.Relation == rel.Lookup.Value.model.Name
-                select t).First();
+            var valueTuple = rel.Lookup.Value;
+            (RelationObject Object, string Relation)[] subjectSet = userSet;
+            var subjectSet2 = TupleSetToUserSet(relation, @object, valueTuple, subjectSet);
 
-            var id = (parent.User as User.UserId)?.Id;
-            var subjectSet2 = from t in subjectSet
-                where t.Relation == rel.Lookup.Value.relation && t.Object.ToString() == id 
-                select (@object, relation);
-            
             subjectSet = subjectSet2.Concat(subjectSet).ToArray();
+            userSet = subjectSet;
         }
 
-        if (subjectSet.Contains((@object, relation)))
+        if (userSet.Contains((@object, relation)))
             return true;
         
         var objSet = from t in _groupToGroup
@@ -95,6 +93,26 @@ public class PermissionSystem
             where t.Relation == relation
             select (obj.Object, obj.Relation);
 
-        return subjectSet.Intersect(objSet).Any();
+        return userSet.Intersect(objSet).Any();
+    }
+
+    private static IEnumerable<(RelationObject Object, string relation)> ComputerUserSet(string relation, (RelationObject Object, string Relation)[] userSet,
+        string unionName)
+    {
+        return from t in userSet
+            where t.Relation == unionName
+            select (t.Object, relation);
+    }
+
+    private IEnumerable<(RelationObject @object, string relation)> TupleSetToUserSet(string relation, RelationObject @object,
+        (ModelRelationship model, string relation) valueTuple, IEnumerable<(RelationObject Object, string Relation)> subjectSet)
+    {
+        var tupleSet = (from t in _memberToGroup
+            where t.Relation == valueTuple.model.Name
+            select t).First();
+
+        return from t in subjectSet
+            where t.Relation == valueTuple.relation && t.Object.ToString() == tupleSet.User.ToString()
+            select (@object, relation);
     }
 }
