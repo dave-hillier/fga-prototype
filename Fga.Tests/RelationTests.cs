@@ -3,18 +3,31 @@ namespace Fga.Tests;
 public class RelationTests
 {
     private readonly PermissionSystem _system = new(
-        new ModelType("team")
+        new TypeSystem
         {
-            Relationships = new[] {new ModelRelationship("member")}
-        },
-        new ModelType("doc")
-        {
-            Relationships = new[] {new ModelRelationship("editor"), 
-                new ModelRelationship("viewer")},
+            TypeDefinitions = new[]
+            {
+                new TypeDefinition
+                {
+                    Type = "team",
+                    Relations = new Dictionary<string, Relation>
+                    {
+                        { "member", new Relation {This = new This()} }
+                    }
+                },
+                new TypeDefinition
+                {
+                    Type = "doc",
+                    Relations = new Dictionary<string, Relation>
+                    {
+                        { "editor", new Relation {This = new This()} },
+                        { "viewer", new Relation {This = new This()} }
+                    }
+                },
+            }
         }
-        
-        );
-    
+    );
+
     [Fact]
     public void Empty()
     {

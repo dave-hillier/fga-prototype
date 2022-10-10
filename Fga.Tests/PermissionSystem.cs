@@ -6,11 +6,11 @@ public class PermissionSystem
     
     private readonly HashSet<RelationTuple> _groupToGroup = new();
     private readonly HashSet<RelationTuple> _memberToGroup = new();
-    private readonly ModelType[] _types;
+    private readonly TypeSystem _types;
  
-    public PermissionSystem(params ModelType[] types)
+    public PermissionSystem(TypeSystem typeSystem)
     {
-        _types = types;
+        _types = typeSystem;
     }
 
     public void Write(params RelationTuple[] tuples)
@@ -55,11 +55,14 @@ public class PermissionSystem
 
     public bool Check(User user, string relation, RelationObject @object)
     {
-        var rel = _types.FirstOrDefault(m => m.Name == @object.Namespace)?.
-            Relationships.FirstOrDefault(r => r.Name == relation);
-        
-        if (rel == null)
-            throw new Exception($"Unknown relation: {relation}");
+        var type = _types.TypeDefinitions.FirstOrDefault(m => m.Type == @object.Namespace);
+
+        if (type == null)
+            throw new Exception($"Unknown type: {type}");
+
+        if (!type.Relations.TryGetValue(relation, out var rel))
+            throw new Exception($"Unknown type: {relation}");
+
   
         var userSet = (from t in _memberToGroup
             where t.User == user
@@ -68,21 +71,44 @@ public class PermissionSystem
         if (userSet.Contains((@object, relation)))
             return true;
         
-        if (rel.Union != null)
+        if (rel.Union != null && rel.Union.Child != null && rel.Union.Child.Any())
         {
-            userSet = ComputerUserSet(relation, userSet, rel.Union.Name).
-                Concat(userSet).
-                ToArray();
-        }
+            var computedUsersets =
+                from c in rel.Union.Child
+                where c.ComputedUserset != null
+                select c.ComputedUserset;
 
-        if (rel.Lookup.HasValue)
-        {
-            var valueTuple = rel.Lookup.Value;
-            (RelationObject Object, string Relation)[] subjectSet = userSet;
-            var subjectSet2 = TupleSetToUserSet(relation, @object, valueTuple, subjectSet);
+            foreach (var computedUserset in computedUsersets)
+            {
+                userSet = (from t in userSet
+                        where t.Relation == computedUserset.Relation
+                        select (t.Object, relation)).
+                    Concat(userSet).
+                    ToArray();
+            }
+            
+            var tupleToUsersets =
+                from c in rel.Union.Child
+                where c.TupleToUserset != null
+                select c.TupleToUserset;
 
-            subjectSet = subjectSet2.Concat(subjectSet).ToArray();
-            userSet = subjectSet;
+            foreach (var tupleToUserset in tupleToUsersets)
+            {
+                var tuplesetRelation = tupleToUserset.Tupleset.Relation; // Parent
+                var computedUserset = tupleToUserset.ComputedUserset;
+
+                var userSetToFind = from t in _memberToGroup
+                    where t.Object == @object && t.Relation == tuplesetRelation 
+                    select t.User; // parent folder
+
+                var tuplesetSearch = from userId in userSetToFind
+                    from t in _memberToGroup
+                    where t.User == user && t.Relation == computedUserset.Relation && t.Object.ToString() == userId.ToString()
+                    select (@object, relation);
+                
+                userSet = tuplesetSearch.Concat(userSet).
+                    ToArray();
+            }
         }
 
         if (userSet.Contains((@object, relation)))
@@ -95,24 +121,5 @@ public class PermissionSystem
 
         return userSet.Intersect(objSet).Any();
     }
-
-    private static IEnumerable<(RelationObject Object, string relation)> ComputerUserSet(string relation, (RelationObject Object, string Relation)[] userSet,
-        string unionName)
-    {
-        return from t in userSet
-            where t.Relation == unionName
-            select (t.Object, relation);
-    }
-
-    private IEnumerable<(RelationObject @object, string relation)> TupleSetToUserSet(string relation, RelationObject @object,
-        (ModelRelationship model, string relation) valueTuple, IEnumerable<(RelationObject Object, string Relation)> subjectSet)
-    {
-        var tupleSet = (from t in _memberToGroup
-            where t.Relation == valueTuple.model.Name
-            select t).First();
-
-        return from t in subjectSet
-            where t.Relation == valueTuple.relation && t.Object.ToString() == tupleSet.User.ToString()
-            select (@object, relation);
-    }
+    
 }
