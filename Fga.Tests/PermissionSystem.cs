@@ -6,11 +6,11 @@ public class PermissionSystem
     
     private readonly HashSet<RelationTuple> _groupToGroup = new();
     private readonly HashSet<RelationTuple> _memberToGroup = new();
-    private readonly TypeSystem _types;
+    private readonly AuthorizationModel _types;
  
-    public PermissionSystem(TypeSystem typeSystem)
+    public PermissionSystem(AuthorizationModel authorizationModel)
     {
-        _types = typeSystem;
+        _types = authorizationModel;
     }
 
     public void Write(params RelationTuple[] tuples)

@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Fga.Tests;
 
-public class TypeSystem
+public class AuthorizationModel
 {
     public TypeDefinition[] TypeDefinitions { get; set; }
 }

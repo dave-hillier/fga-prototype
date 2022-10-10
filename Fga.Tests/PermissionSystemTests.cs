@@ -5,7 +5,7 @@ public class PermissionSystemTests
     [Fact]
     public void OwnerIsEditor()
     {
-        var typeSystem = new TypeSystem
+        var typeSystem = new AuthorizationModel
         {
             TypeDefinitions = new[]
             {
@@ -51,7 +51,7 @@ public class PermissionSystemTests
     [Fact]
     public void FolderOwnerIsEditor()
     {
-        var typeSystem = new TypeSystem
+        var typeSystem = new AuthorizationModel
         {
             TypeDefinitions = new[]
             {
