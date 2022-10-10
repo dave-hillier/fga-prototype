@@ -1,4 +1,4 @@
-namespace Fga.Tests;
+namespace Fga;
 
 public record RelationObject(string Namespace, string ObjectId)
 {

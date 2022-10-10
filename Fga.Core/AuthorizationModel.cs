@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace Fga.Tests;
+namespace Fga;
 
 public class AuthorizationModel
 {

@@ -1,4 +1,4 @@
-namespace Fga.Tests;
+namespace Fga;
 
 public class AuthorizationSystem
 {
@@ -62,61 +62,86 @@ public class AuthorizationSystem
 
         if (!type.Relations.TryGetValue(relation, out var rel))
             throw new Exception($"Unknown type: {relation}");
-        
-        var userSet = GetUserset(user).ToArray();
-        
-        if (userSet.Contains((@object, relation)))
-            return true;
-        
-        if (rel.Union != null && rel.Union.Child != null && rel.Union.Child.Any())
+
+        (RelationObject Object, string Relation)[] userSet = {};
+
+        if (rel.This != null)
         {
-            var computedUsersets =
-                from c in rel.Union.Child
-                where c.ComputedUserset != null
-                select c.ComputedUserset;
-
-            foreach (var computedUserset in computedUsersets)
+            userSet = GetUserset(user).ToArray();
+        }
+        else if (rel.Union is {Child: { }})
+        {
+            foreach (var child in rel.Union.Child)
             {
-                userSet = (from t in userSet
-                        where t.Relation == computedUserset.Relation
-                        select (t.Object, relation)).
-                    Concat(userSet).
-                    ToArray();
-            }
-            
-            var tupleToUsersets =
-                from c in rel.Union.Child
-                where c.TupleToUserset != null
-                select c.TupleToUserset;
+                var result = GetComputed(user, relation, @object, child, userSet);
 
-            foreach (var tupleToUserset in tupleToUsersets)
-            {
-                var tuplesetRelation = tupleToUserset.Tupleset.Relation; 
-                var computedUserset = tupleToUserset.ComputedUserset;
-
-                var userSetToFind = from t in _memberToGroup
-                    where t.Object == @object && t.Relation == tuplesetRelation 
-                    select t.User; 
-
-                var tuplesetSearch = from userId in userSetToFind
-                    from t in GetUserset(user)
-                    where t.Relation == computedUserset.Relation && t.Object.ToString() == userId.ToString()
-                    select (@object, relation);
-                
-                userSet = tuplesetSearch.Concat(userSet).
-                    ToArray();
+                userSet = result.Concat(userSet).ToArray();
             }
         }
 
         if (userSet.Contains((@object, relation)))
             return true;
-        
-        var objSet = from t in _groupToGroup
+
+        return userSet.Intersect(GetGroupset(relation)).Any();
+    }
+
+    private IEnumerable<(RelationObject Object, string Relation)> GetComputed(User user, string relation, RelationObject @object, Child child,
+        (RelationObject Object, string Relation)[] userSet)
+    {
+        if (child.This != null)
+        {
+            return GetUserset(user);
+        }
+
+        var childComputedUserset = child.ComputedUserset;
+        if (childComputedUserset != null)
+        {
+            return GetModifiedTuple(relation, userSet, childComputedUserset);
+        }
+
+        var tupleToUserset = child.TupleToUserset;
+        if (tupleToUserset != null)
+        {
+            var tuplesetRelation = tupleToUserset.Tupleset.Relation;
+            var computedUserset = tupleToUserset.ComputedUserset.Relation; // TODO: what about the object?
+
+            return TupleToUserset(user, relation, @object, tuplesetRelation, computedUserset);
+        }
+
+        return Array.Empty<(RelationObject Object, string Relation)>();
+    }
+
+    private IEnumerable<(RelationObject Object, string Relation)> TupleToUserset(
+        User user, 
+        string relation, 
+        RelationObject @object, 
+        string tuplesetRelation,
+        string computedUserset)
+    {
+        var groupsForObject = from t in _memberToGroup
+            where t.Object == @object && t.Relation == tuplesetRelation 
+            select t.User;
+
+        return from userSet in groupsForObject
+            from t in GetUserset(user)
+            where t.Relation == computedUserset && t.Object.ToString() == userSet.ToString()
+            select (@object, relation);
+    }
+
+    private static IEnumerable<(RelationObject Object, string Relation)> GetModifiedTuple(string relation, (RelationObject Object, string Relation)[] userSet,
+        ComputedUserset childComputedUserset)
+    {
+        return from t in userSet
+            where t.Relation == childComputedUserset.Relation
+            select (t.Object, relation);
+    }
+
+    private IEnumerable<(RelationObject Object, string Relation)> GetGroupset(string relation)
+    {
+        return from t in _groupToGroup
             let obj = t.User as User.UserSet
             where t.Relation == relation
             select (obj.Object, obj.Relation);
-
-        return userSet.Intersect(objSet).Any();
     }
 
     private IEnumerable<(RelationObject Object, string Relation)> GetUserset(User user)

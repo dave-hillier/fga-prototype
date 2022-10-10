@@ -1,4 +1,4 @@
-namespace Fga.Tests;
+namespace Fga;
 
 public record RelationTuple(RelationObject Object, string Relation, User User)
 {
