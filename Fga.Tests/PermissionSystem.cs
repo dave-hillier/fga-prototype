@@ -73,15 +73,15 @@ public class PermissionSystem
             subjectSet = subjectSet2.Concat(subjectSet).ToArray();
         }
 
-        if (rel.Lookup != null)
+        if (rel.Lookup.HasValue)
         {
             var parent = (from t in _memberToGroup
-                where t.Relation == rel.Lookup.Name
+                where t.Relation == rel.Lookup.Value.model.Name
                 select t).First();
 
             var id = (parent.User as User.UserId)?.Id;
             var subjectSet2 = from t in subjectSet
-                where t.Relation == "owner" && t.Object.ToString() == id 
+                where t.Relation == rel.Lookup.Value.relation && t.Object.ToString() == id 
                 select (@object, relation);
             
             subjectSet = subjectSet2.Concat(subjectSet).ToArray();

@@ -10,5 +10,5 @@ public class ModelRelationship
     public string Name { get; set; }
 
     public ModelRelationship? Union { get; set; }
-    public ModelRelationship? Lookup { get; set; }
+    public (ModelRelationship model, string relation)? Lookup { get; set; }
 }

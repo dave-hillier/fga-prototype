@@ -23,7 +23,7 @@ public class PermissionSystemTests
     {
         var ownerRel = new ModelRelationship("owner");
         var parentRel = new ModelRelationship("parent");
-        var viewerRel = new ModelRelationship("viewer") { Lookup = parentRel };
+        var viewerRel = new ModelRelationship("viewer") { Lookup = (parentRel, "owner") };
  
         var system = new PermissionSystem(
             new ModelType("folder") {Relationships = new [] { ownerRel }},
@@ -37,5 +37,6 @@ public class PermissionSystemTests
         Assert.True(system.Check(new User.UserId("dave"), 
             "viewer", 
             new RelationObject("doc", "123")));
-    }    
+    }
+    // TODO: recursive, multiple relations, something other than owner
 }
