@@ -94,12 +94,12 @@ public class PermissionSystem
 
             foreach (var tupleToUserset in tupleToUsersets)
             {
-                var tuplesetRelation = tupleToUserset.Tupleset.Relation; // Parent
+                var tuplesetRelation = tupleToUserset.Tupleset.Relation; 
                 var computedUserset = tupleToUserset.ComputedUserset;
 
                 var userSetToFind = from t in _memberToGroup
                     where t.Object == @object && t.Relation == tuplesetRelation 
-                    select t.User; // parent folder
+                    select t.User; 
 
                 var tuplesetSearch = from userId in userSetToFind
                     from t in _memberToGroup
