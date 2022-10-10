@@ -1,16 +1,16 @@
 namespace Fga.Tests;
 
-public class PermissionsSystem
+public class PermissionSystem
 {
     private readonly List<RelationTuple> _all = new();
     
     private readonly HashSet<RelationTuple> _groupToGroup = new();
     private readonly HashSet<RelationTuple> _memberToGroup = new();
-    private readonly ModelType _model;
+    private readonly ModelType[] _types;
  
-    public PermissionsSystem(ModelType model)
+    public PermissionSystem(params ModelType[] types)
     {
-        _model = model;
+        _types = types;
     }
 
     public void Write(params RelationTuple[] tuples)
@@ -53,15 +53,29 @@ public class PermissionsSystem
         }
     }
 
-    public bool Check(User subject, string relation, RelationObject @object)
+    public bool Check(User user, string relation, RelationObject @object)
     {
-        if (_memberToGroup.Contains(new RelationTuple(@object, relation, subject)))
+        var rel = _types.FirstOrDefault(m => m.Name == @object.Namespace)?.
+            Relationships.FirstOrDefault(r => r.Name == relation);
+        
+        if (rel == null)
+            throw new Exception($"Unknown relation {relation}");
+  
+        var subjectSet = (from t in _memberToGroup
+            where t.User == user
+            select (t.Object, t.Relation)).ToArray();
+
+        if (rel.Union != null)
+        {
+            var subjectSet2 = from t in subjectSet
+                where t.Relation == rel.Union.Name
+                select (t.Object, relation);
+            subjectSet = subjectSet2.Concat(subjectSet).ToArray();
+        }
+
+        if (subjectSet.Contains((@object, relation)))
             return true;
-
-        var subjectSet = from t in _memberToGroup
-            where t.User == subject
-            select (t.Object, t.Relation);
-
+        
         var objSet = from t in _groupToGroup
             let obj = t.User as User.UserSet
             where t.Relation == relation
@@ -69,4 +83,6 @@ public class PermissionsSystem
 
         return subjectSet.Intersect(objSet).Any();
     }
+
+
 }

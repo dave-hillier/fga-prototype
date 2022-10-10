@@ -2,8 +2,18 @@ namespace Fga.Tests;
 
 public class RelationTests
 {
-    private readonly PermissionsSystem _system = new(new ModelType("team")
-        {Relationships = new[] {new ModelRelationship("member")}});
+    private readonly PermissionSystem _system = new(
+        new ModelType("team")
+        {
+            Relationships = new[] {new ModelRelationship("member")}
+        },
+        new ModelType("doc")
+        {
+            Relationships = new[] {new ModelRelationship("editor"), 
+                new ModelRelationship("viewer")},
+        }
+        
+        );
     
     [Fact]
     public void Empty()
