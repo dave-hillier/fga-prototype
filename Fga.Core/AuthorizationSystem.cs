@@ -74,15 +74,12 @@ public class AuthorizationSystem
             foreach (var child in rel.Union.Child)
             {
                 var result = GetComputed(user, relation, @object, child, userSet);
-
                 userSet = result.Concat(userSet).ToArray();
             }
         }
-
-        if (userSet.Contains((@object, relation)))
-            return true;
-
-        return userSet.Intersect(GetGroupset(relation)).Any();
+        
+        return userSet.Contains((@object, relation)) || 
+               userSet.Intersect(GetGroupset(relation)).Any();
     }
 
     private IEnumerable<(RelationObject Object, string Relation)> GetComputed(User user, string relation, RelationObject @object, Child child,
@@ -96,7 +93,7 @@ public class AuthorizationSystem
         var childComputedUserset = child.ComputedUserset;
         if (childComputedUserset != null)
         {
-            return GetModifiedTuple(relation, userSet, childComputedUserset);
+            return ModifyRelation(userSet, relation, childComputedUserset.Relation);
         }
 
         var tupleToUserset = child.TupleToUserset;
@@ -128,12 +125,14 @@ public class AuthorizationSystem
             select (@object, relation);
     }
 
-    private static IEnumerable<(RelationObject Object, string Relation)> GetModifiedTuple(string relation, (RelationObject Object, string Relation)[] userSet,
-        ComputedUserset childComputedUserset)
+    private static IEnumerable<(RelationObject Object, string Relation)> ModifyRelation(
+        IEnumerable<(RelationObject Object, string Relation)> userSet,
+        string targetRelation,
+        string computedRelation)
     {
         return from t in userSet
-            where t.Relation == childComputedUserset.Relation
-            select (t.Object, relation);
+            where t.Relation == computedRelation
+            select (t.Object, relation: targetRelation);
     }
 
     private IEnumerable<(RelationObject Object, string Relation)> GetGroupset(string relation)
