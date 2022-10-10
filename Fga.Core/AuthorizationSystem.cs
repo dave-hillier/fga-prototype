@@ -55,6 +55,14 @@ public class AuthorizationSystem
 
     public bool Check(User user, string relation, RelationObject @object)
     {
+        var userSet = GetUserset(user, relation, @object);
+
+        return userSet.Contains((@object, relation)) || 
+               userSet.Intersect(GetGroupset(relation)).Any();
+    }
+
+    private (RelationObject Object, string Relation)[] GetUserset(User user, string relation, RelationObject @object)
+    {
         var type = _model.TypeDefinitions.FirstOrDefault(m => m.Type == @object.Namespace);
 
         if (type == null)
@@ -63,33 +71,32 @@ public class AuthorizationSystem
         if (!type.Relations.TryGetValue(relation, out var rel))
             throw new Exception($"Unknown type: {relation}");
 
-        (RelationObject Object, string Relation)[] userSet = {};
+        (RelationObject Object, string Relation)[] userSet = { };
 
         if (rel.This != null)
         {
-            userSet = GetUserset(user).ToArray();
+            userSet = GetDirectUserset(user).ToArray();
         }
         else if (rel.Union is {Child: { }})
         {
             var computedSets = rel.Union.Child.Select(child => GetComputed(user, relation, @object, child));
             foreach (var set in computedSets) userSet = set.Concat(userSet).ToArray();
         }
-        
-        return userSet.Contains((@object, relation)) || 
-               userSet.Intersect(GetGroupset(relation)).Any();
+
+        return userSet;
     }
 
     private IEnumerable<(RelationObject Object, string Relation)> GetComputed(User user, string relation, RelationObject @object, Child child)
     {
         if (child.This != null)
         {
-            return GetUserset(user);
+            return GetDirectUserset(user);
         }
 
         var computedUserset = child.ComputedUserset;
         if (computedUserset != null)
         {
-            return ModifyRelation(GetUserset(user), relation, computedUserset.Relation);
+            return ModifyRelation(GetDirectUserset(user), relation, computedUserset.Relation);
         }
 
         var tupleToUserset = child.TupleToUserset;
@@ -115,7 +122,8 @@ public class AuthorizationSystem
             select t.User;
 
         return from userSet in groupsForObject
-            from t in GetUserset(user)
+            let obj = RelationObject.Parse(userSet.ToString()) // TODO: convert without strings
+            from t in GetUserset(user, computedUserset, obj)
             where t.Relation == computedUserset && t.Object.ToString() == userSet.ToString()
             select (@object, relation);
     }
@@ -138,7 +146,7 @@ public class AuthorizationSystem
             select (obj.Object, obj.Relation);
     }
 
-    private IEnumerable<(RelationObject Object, string Relation)> GetUserset(User user)
+    private IEnumerable<(RelationObject Object, string Relation)> GetDirectUserset(User user)
     {
         return from t in _memberToGroup
             where t.User == user
