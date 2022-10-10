@@ -2,7 +2,7 @@ namespace Fga.Tests;
 
 public class RelationTests
 {
-    private readonly PermissionSystem _system = new(
+    private readonly AuthorizationSystem _system = new(
         new AuthorizationModel
         {
             TypeDefinitions = new[]

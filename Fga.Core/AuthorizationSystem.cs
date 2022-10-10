@@ -1,16 +1,16 @@
 namespace Fga.Tests;
 
-public class PermissionSystem
+public class AuthorizationSystem
 {
     private readonly List<RelationTuple> _all = new();
     
     private readonly HashSet<RelationTuple> _groupToGroup = new();
     private readonly HashSet<RelationTuple> _memberToGroup = new();
-    private readonly AuthorizationModel _types;
+    private readonly AuthorizationModel _model;
  
-    public PermissionSystem(AuthorizationModel authorizationModel)
+    public AuthorizationSystem(AuthorizationModel authorizationModel)
     {
-        _types = authorizationModel;
+        _model = authorizationModel;
     }
 
     public void Write(params RelationTuple[] tuples)
@@ -55,18 +55,15 @@ public class PermissionSystem
 
     public bool Check(User user, string relation, RelationObject @object)
     {
-        var type = _types.TypeDefinitions.FirstOrDefault(m => m.Type == @object.Namespace);
+        var type = _model.TypeDefinitions.FirstOrDefault(m => m.Type == @object.Namespace);
 
         if (type == null)
             throw new Exception($"Unknown type: {type}");
 
         if (!type.Relations.TryGetValue(relation, out var rel))
             throw new Exception($"Unknown type: {relation}");
-
-  
-        var userSet = (from t in _memberToGroup
-            where t.User == user
-            select (t.Object, t.Relation)).ToArray();
+        
+        var userSet = GetUserset(user).ToArray();
         
         if (userSet.Contains((@object, relation)))
             return true;
@@ -102,8 +99,8 @@ public class PermissionSystem
                     select t.User; 
 
                 var tuplesetSearch = from userId in userSetToFind
-                    from t in _memberToGroup
-                    where t.User == user && t.Relation == computedUserset.Relation && t.Object.ToString() == userId.ToString()
+                    from t in GetUserset(user)
+                    where t.Relation == computedUserset.Relation && t.Object.ToString() == userId.ToString()
                     select (@object, relation);
                 
                 userSet = tuplesetSearch.Concat(userSet).
@@ -121,5 +118,11 @@ public class PermissionSystem
 
         return userSet.Intersect(objSet).Any();
     }
-    
+
+    private IEnumerable<(RelationObject Object, string Relation)> GetUserset(User user)
+    {
+        return from t in _memberToGroup
+            where t.User == user
+            select (t.Object, t.Relation);
+    }
 }

@@ -1,57 +1,12 @@
 namespace Fga.Tests;
 
-public class PermissionSystemTests
+public class TupleSetTests
 {
-    [Fact]
-    public void OwnerIsEditor()
-    {
-        var typeSystem = new AuthorizationModel
-        {
-            TypeDefinitions = new[]
-            {
-                new TypeDefinition
-                {
-                    Type = "doc",
-                    Relations = new Dictionary<string, Relation>
-                    {
-                        {
-                            "owner", new Relation {This = new This()}
-                        },
-                        {
-                            "editor", new Relation
-                            {
-                                Union = new Union
-                                {
-                                    Child = new Child[]
-                                    {
-                                        new() {This = new This()},
-                                        new() {ComputedUserset = new ComputedUserset {Relation = "owner"}}
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-            }
-        };
-
-        var system = new PermissionSystem(typeSystem);
-
-        system.Write(RelationTuple.Parse("doc:123#owner@kuba"));
-
-        Assert.True(system.Check(new User.UserId("kuba"),
-            "editor",
-            new RelationObject("doc", "123")));
-
-        Assert.False(system.Check(new User.UserId("dave"),
-            "editor",
-            new RelationObject("doc", "123")));
-    }
 
     [Fact]
     public void FolderOwnerIsEditor()
     {
-        var typeSystem = new AuthorizationModel
+        var model = new AuthorizationModel
         {
             TypeDefinitions = new[]
             {
@@ -102,7 +57,7 @@ public class PermissionSystemTests
                 },
             }
         };
-        var system = new PermissionSystem(typeSystem);
+        var system = new AuthorizationSystem(model);
 
         system.Write(
             RelationTuple.Parse("folder:456#owner@dave"),
