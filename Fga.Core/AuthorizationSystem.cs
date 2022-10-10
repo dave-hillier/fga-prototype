@@ -31,9 +31,9 @@ public class AuthorizationSystem
             WriteGroup2GroupCache(grouped[false]);
     }
 
-    private void WriteMember2GroupCache(IEnumerable<RelationTuple> permissionsTuples)
+    private void WriteMember2GroupCache(IEnumerable<RelationTuple> tuples)
     {
-        foreach (var permissionsTuple in permissionsTuples) _memberToGroup.Add(permissionsTuple);
+        foreach (var tuple in tuples) _memberToGroup.Add(tuple);
     }
 
     private void WriteGroup2GroupCache(RelationTuple[] tuples)
@@ -71,41 +71,36 @@ public class AuthorizationSystem
         }
         else if (rel.Union is {Child: { }})
         {
-            foreach (var child in rel.Union.Child)
-            {
-                var result = GetComputed(user, relation, @object, child, userSet);
-                userSet = result.Concat(userSet).ToArray();
-            }
+            var computedSets = rel.Union.Child.Select(child => GetComputed(user, relation, @object, child));
+            foreach (var set in computedSets) userSet = set.Concat(userSet).ToArray();
         }
         
         return userSet.Contains((@object, relation)) || 
                userSet.Intersect(GetGroupset(relation)).Any();
     }
 
-    private IEnumerable<(RelationObject Object, string Relation)> GetComputed(User user, string relation, RelationObject @object, Child child,
-        (RelationObject Object, string Relation)[] userSet)
+    private IEnumerable<(RelationObject Object, string Relation)> GetComputed(User user, string relation, RelationObject @object, Child child)
     {
         if (child.This != null)
         {
             return GetUserset(user);
         }
 
-        var childComputedUserset = child.ComputedUserset;
-        if (childComputedUserset != null)
+        var computedUserset = child.ComputedUserset;
+        if (computedUserset != null)
         {
-            return ModifyRelation(userSet, relation, childComputedUserset.Relation);
+            return ModifyRelation(GetUserset(user), relation, computedUserset.Relation);
         }
 
         var tupleToUserset = child.TupleToUserset;
-        if (tupleToUserset != null)
-        {
-            var tuplesetRelation = tupleToUserset.Tupleset.Relation;
-            var computedUserset = tupleToUserset.ComputedUserset.Relation; // TODO: what about the object?
+        
+        if (tupleToUserset == null) 
+            return Array.Empty<(RelationObject Object, string Relation)>();
 
-            return TupleToUserset(user, relation, @object, tuplesetRelation, computedUserset);
-        }
+        return TupleToUserset(user, relation, @object, 
+            tupleToUserset.Tupleset.Relation, 
+            tupleToUserset.ComputedUserset.Relation);
 
-        return Array.Empty<(RelationObject Object, string Relation)>();
     }
 
     private IEnumerable<(RelationObject Object, string Relation)> TupleToUserset(

@@ -2,40 +2,40 @@ namespace Fga.Tests;
 
 public class ComputedRelationTests
 {
-    [Fact]
-    public void OwnerIsEditor()
+    private readonly AuthorizationModel _model = new()
     {
-        var model = new AuthorizationModel
+        TypeDefinitions = new[]
         {
-            TypeDefinitions = new[]
+            new TypeDefinition
             {
-                new TypeDefinition
+                Type = "doc",
+                Relations = new Dictionary<string, Relation>
                 {
-                    Type = "doc",
-                    Relations = new Dictionary<string, Relation>
                     {
+                        "owner", new Relation {This = new This()}
+                    },
+                    {
+                        "editor", new Relation
                         {
-                            "owner", new Relation {This = new This()}
-                        },
-                        {
-                            "editor", new Relation
+                            Union = new Union
                             {
-                                Union = new Union
+                                Child = new Child[]
                                 {
-                                    Child = new Child[]
-                                    {
-                                        new() {This = new This()},
-                                        new() {ComputedUserset = new ComputedUserset {Relation = "owner"}}
-                                    }
+                                    new() {This = new This()},
+                                    new() {ComputedUserset = new ComputedUserset {Relation = "owner"}}
                                 }
                             }
                         }
                     }
-                },
-            }
-        };
+                }
+            },
+        }
+    };
 
-        var system = new AuthorizationSystem(model);
+    [Fact]
+    public void OwnerIsEditor()
+    {
+        var system = new AuthorizationSystem(_model);
 
         system.Write(RelationTuple.Parse("doc:123#owner@kuba"));
 

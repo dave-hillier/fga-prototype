@@ -26,6 +26,6 @@ public record User
     
     public static User Parse(string userString)
     {
-        return userString.Contains('#') ? User.UserSet.Parse(userString) : new User.UserId(userString);
+        return userString.Contains('#') ? UserSet.Parse(userString) : new UserId(userString);
     }
 }
