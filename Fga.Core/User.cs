@@ -2,6 +2,8 @@ namespace Fga;
 
 public record User
 {
+    public static UserId Wildcard => new("*");
+    
     public record UserId(string Id) : User
     {
         public override string ToString()

@@ -2,6 +2,9 @@ using Newtonsoft.Json;
 
 namespace Fga;
 
+// designed to be compatible with OpenFGA's schema,
+// though with a different naming strategy https://www.newtonsoft.com/json/help/html/NamingStrategySnakeCase.htm
+
 public class AuthorizationModel
 {
     public TypeDefinition[] TypeDefinitions { get; set; }

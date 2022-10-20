@@ -6,6 +6,7 @@ public class AuthorizationSystem
     
     private readonly HashSet<RelationTuple> _groupToGroup = new();
     private readonly HashSet<RelationTuple> _memberToGroup = new();
+    
     private readonly AuthorizationModel _model;
  
     public AuthorizationSystem(AuthorizationModel authorizationModel)
@@ -55,6 +56,11 @@ public class AuthorizationSystem
 
     public bool Check(User user, string relation, RelationObject @object)
     {
+        var hasWildcard =
+            _memberToGroup.Any(t => t.User == User.Wildcard && t.Object == @object && t.Relation == relation);
+        if (hasWildcard)
+            return true;
+            
         var userSet = GetUserset(user, relation, @object);
 
         return userSet.Contains((@object, relation)) || 
@@ -71,22 +77,18 @@ public class AuthorizationSystem
         if (!type.Relations.TryGetValue(relation, out var rel))
             throw new Exception($"Unknown type: {relation}");
 
-        (RelationObject Object, string Relation)[] userSet = { };
-
         if (rel.This != null)
         {
-            userSet = GetDirectUserset(user).ToArray();
+            return GetDirectUserset(user).ToArray();
         }
-        else if (rel.Union is {Child: { }})
-        {
-            var computedSets = rel.Union.Child.Select(child => GetComputed(user, relation, @object, child));
-            foreach (var set in computedSets) userSet = set.Concat(userSet).ToArray();
-        }
-
-        return userSet;
+        
+        return rel.Union is not {Child: { }} ? 
+            Array.Empty<(RelationObject Object, string Relation)>() : 
+            rel.Union.Child.SelectMany(child => GetChildUserset(child, user, relation, @object)).ToArray();
     }
 
-    private IEnumerable<(RelationObject Object, string Relation)> GetComputed(User user, string relation, RelationObject @object, Child child)
+    private IEnumerable<(RelationObject Object, string Relation)> GetChildUserset(Child child, User user,
+        string relation, RelationObject @object)
     {
         if (child.This != null)
         {
@@ -96,7 +98,10 @@ public class AuthorizationSystem
         var computedUserset = child.ComputedUserset;
         if (computedUserset != null)
         {
-            return ModifyRelation(GetDirectUserset(user), relation, computedUserset.Relation);
+            // TODO: add test for this
+            var userSet = GetUserset(user, computedUserset.Relation, @object);
+            //var userSet = GetDirectUserset(user);
+            return ModifyRelation(userSet, relation, computedUserset.Relation);
         }
 
         var tupleToUserset = child.TupleToUserset;
