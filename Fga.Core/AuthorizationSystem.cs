@@ -4,10 +4,8 @@ public class AuthorizationSystem
 {
     private readonly HashSet<RelationTuple> _all = new();
     
-    private readonly HashSet<RelationTuple> _flattenedGroups = new(); // TODO: this isn't strictly a cache as it's 
-
+    private readonly HashSet<RelationTuple> _flattenedGroups = new();
     private IEnumerable<RelationTuple> GroupToGroup => _flattenedGroups.Union(_all.Where(t => t.User is not User.UserId));
-    private IEnumerable<RelationTuple> MemberToGroup => _all.Where(t => t.User is User.UserId);
 
     private readonly AuthorizationModel _model;
  
@@ -61,9 +59,10 @@ public class AuthorizationSystem
 
     public bool Check(User user, string relation, RelationObject @object)
     {
-        var groupSet = GetGroupset(relation);
-        var userSet = GetUserset(user, relation, @object).ToHashSet();
-        return userSet.Contains((@object, relation)) || userSet.Intersect(groupSet).Any();
+        var groupsUserIsIn = GetUserset(user, relation, @object).ToHashSet();
+        
+        return groupsUserIsIn.Contains((@object, relation)) || 
+               groupsUserIsIn.Any(g => Check(g.Object.ToUserset(g.Relation), relation, @object));
     }
 
     private IEnumerable<(RelationObject Object, string Relation)> GetUserset(User user, string relation, RelationObject @object)
@@ -97,8 +96,6 @@ public class AuthorizationSystem
         var computedUserset = child.ComputedUserset;
         if (computedUserset != null)
         {
-            // TODO: add test for this
-            //var userSet = GetUserset(user, computedUserset.Relation, @object);
             var userSet = GetDirectUserset(user);
             return ModifyRelation(userSet, relation, computedUserset.Relation);
         }
@@ -121,7 +118,7 @@ public class AuthorizationSystem
         string tuplesetRelation,
         string computedUserset)
     {
-        var groupsForObject = from t in MemberToGroup
+        var groupsForObject = from t in _all
             where t.Object == @object && t.Relation == tuplesetRelation 
             select t.User;
 
@@ -142,19 +139,9 @@ public class AuthorizationSystem
             select (t.Object, relation: targetRelation);
     }
 
-    private IEnumerable<(RelationObject Object, string Relation)> GetGroupset(string relation)
-    {
-        var groups = from t in GroupToGroup
-            let obj = t.User as User.UserSet
-            where t.Relation == relation
-            select (obj.Object, obj.Relation);
-
-        return groups;
-    }
-
     private IEnumerable<(RelationObject Object, string Relation)> GetDirectUserset(User user)
     {
-        return from t in MemberToGroup
+        return from t in _all
             where t.User == user || t.User == User.Wildcard
             select (t.Object, t.Relation);
     }
