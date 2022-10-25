@@ -26,12 +26,12 @@ public class StoresController : ControllerBase
         
         if (writeRequest.Deletes.TupleKeys.Any())
         {
-            throw new NotImplementedException();
+            _authorizationSystem.Delete(writeRequest.Deletes.TupleKeys.ToArray());
         }
         
-        return Ok();
+        return Accepted();
     }
-
+    
     [HttpGet("check")]
     public CheckResponse Check(CheckRequest request)
     {

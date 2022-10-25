@@ -18,26 +18,42 @@ public class AuthorizationSystem
     {
         foreach (var relationTuple in tuples) _all.Add(relationTuple);
 
-        WriteCache(tuples);
+        AddTuplesToCache(tuples);
+    }
+    
+    public void Delete(params RelationTuple[] removedTuples)
+    {
+        foreach (var relationTuple in removedTuples) _all.Remove(relationTuple);
+
+        UpdateCache();
     }
 
-    private void WriteCache(IEnumerable<RelationTuple> tuples)
+    private void UpdateCache()
+    {
+        _groupToGroup.Clear();
+        _memberToGroup.Clear();
+        AddTuplesToCache(_all);
+        // TODO: this is the most naive approach which requires rebuilding the entire cache. 
+    }
+
+
+    private void AddTuplesToCache(IEnumerable<RelationTuple> tuples)
     {
         var grouped = tuples.GroupBy(t => t.User is User.UserId).ToDictionary(g => g.Key, g => g.ToArray());
 
         if (grouped.ContainsKey(true))
-            WriteMember2GroupCache(grouped[true]);
+            AddMember2GroupCache(grouped[true]);
 
         if (grouped.ContainsKey(false))
-            WriteGroup2GroupCache(grouped[false]);
+            AddGroup2GroupCache(grouped[false]);
     }
 
-    private void WriteMember2GroupCache(IEnumerable<RelationTuple> tuples)
+    private void AddMember2GroupCache(IEnumerable<RelationTuple> tuples)
     {
         foreach (var tuple in tuples) _memberToGroup.Add(tuple);
     }
 
-    private void WriteGroup2GroupCache(RelationTuple[] tuples)
+    private void AddGroup2GroupCache(RelationTuple[] tuples)
     {
         while (tuples.Any())
         {
