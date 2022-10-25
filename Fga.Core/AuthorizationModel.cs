@@ -3,8 +3,8 @@ using Newtonsoft.Json;
 
 namespace Fga.Core;
 
-// designed to be compatible with OpenFGA's schema,
-// though with a different naming strategy https://www.newtonsoft.com/json/help/html/NamingStrategySnakeCase.htm
+// designed to be compatible with OpenFGA's schema, https://openfga.dev/
+// The mixture of snake and pascal case is strange 
 
 public class AuthorizationModel
 {
@@ -48,7 +48,7 @@ public class Child
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public ComputedUserset? ComputedUserset { get; set; }
     
-    [JsonPropertyName("tuple_to_userset")]
+    [JsonPropertyName("tupleToUserset")]
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public TupleToUserset? TupleToUserset { get; set; }
 }
@@ -79,6 +79,6 @@ public class TupleToUserset
     [JsonPropertyName("tupleset")]
     public Tupleset Tupleset { get; init; }
     
-    [JsonPropertyName("computed_userset")]
+    [JsonPropertyName("computedUserset")]
     public ComputedUserset ComputedUserset { get; init; }
 }

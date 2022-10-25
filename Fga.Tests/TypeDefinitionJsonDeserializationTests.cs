@@ -10,19 +10,29 @@ public class TypeDefinitionJsonDeserializationTests
     {
       ""type"": ""document"",
       ""relations"": {
-        ""reader"": {
-          ""this"": {}
-        },
         ""writer"": {
           ""this"": {}
         },
-        ""owner"": {
-          ""this"": {}
+        ""reader"": {
+          ""union"": {
+            ""child"": [
+              {
+                ""this"": {}
+              },
+              {
+                ""computedUserset"": {
+                  ""object"": """",
+                  ""relation"": ""writer""
+                }
+              }
+            ]
+          }
         }
       }
     }
   ]
-}";
+}
+";
 
     [Fact]
     public void CanParse()
@@ -30,7 +40,8 @@ public class TypeDefinitionJsonDeserializationTests
       var result = JsonSerializer.Deserialize<AuthorizationModel>(_example);
       
       Assert.Equal("document", result.TypeDefinitions.First().Type);
-      Assert.Equal("reader", result.TypeDefinitions.First().Relations.First().Key);
-      Assert.Equal("owner", result.TypeDefinitions.First().Relations.Last().Key);
+      Assert.Equal("writer", result.TypeDefinitions.First().Relations.First().Key);
+      Assert.Equal("reader", result.TypeDefinitions.First().Relations.Last().Key);
+      Assert.Equal("reader", result.TypeDefinitions.First().Relations.Last().Key);
     }
 }
