@@ -1,4 +1,4 @@
-namespace Fga;
+namespace Fga.Core;
 
 public class AuthorizationSystem
 {
@@ -61,13 +61,13 @@ public class AuthorizationSystem
         if (hasWildcard)
             return true;
             
-        var userSet = GetUserset(user, relation, @object);
+        var userSet = GetUserset(user, relation, @object).ToHashSet();
 
         return userSet.Contains((@object, relation)) || 
                userSet.Intersect(GetGroupset(relation)).Any();
     }
 
-    private (RelationObject Object, string Relation)[] GetUserset(User user, string relation, RelationObject @object)
+    private IEnumerable<(RelationObject Object, string Relation)> GetUserset(User user, string relation, RelationObject @object)
     {
         var type = _model.TypeDefinitions.FirstOrDefault(m => m.Type == @object.Namespace);
 
@@ -79,12 +79,12 @@ public class AuthorizationSystem
 
         if (rel.This != null)
         {
-            return GetDirectUserset(user).ToArray();
+            return GetDirectUserset(user);
         }
         
         return rel.Union is not {Child: { }} ? 
             Array.Empty<(RelationObject Object, string Relation)>() : 
-            rel.Union.Child.SelectMany(child => GetChildUserset(child, user, relation, @object)).ToArray();
+            rel.Union.Child.SelectMany(child => GetChildUserset(child, user, relation, @object));
     }
 
     private IEnumerable<(RelationObject Object, string Relation)> GetChildUserset(Child child, User user,

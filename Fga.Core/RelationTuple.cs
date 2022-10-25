@@ -1,4 +1,4 @@
-namespace Fga;
+namespace Fga.Core;
 
 public record RelationTuple(RelationObject Object, string Relation, User User)
 {

@@ -1,20 +1,20 @@
 using Newtonsoft.Json;
 
-namespace Fga;
+namespace Fga.Core;
 
 // designed to be compatible with OpenFGA's schema,
 // though with a different naming strategy https://www.newtonsoft.com/json/help/html/NamingStrategySnakeCase.htm
 
 public class AuthorizationModel
 {
-    public TypeDefinition[] TypeDefinitions { get; set; }
+    public TypeDefinition[] TypeDefinitions { get; init; }
 }
 
 public class TypeDefinition
 {
-    public string Type { get; set; }
+    public string Type { get; init; }
 
-    public Dictionary<string, Relation> Relations { get; set; }
+    public Dictionary<string, Relation> Relations { get; init; }
 }
 
 public class Relation
@@ -28,7 +28,7 @@ public class Relation
 
 public class Union
 {
-    public Child[]? Child { get; set; }
+    public Child[]? Child { get; init; }
 }
 
 public class Child
@@ -48,12 +48,12 @@ public class ComputedUserset
     [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
     public string Object { get; set; }
     
-    public string Relation { get; set; }
+    public string Relation { get; init; }
 }
 
 public class Tupleset
 {
-    public string Relation { get; set; }
+    public string Relation { get; init; }
 }
 
 
@@ -63,7 +63,7 @@ public class This
 
 public class TupleToUserset
 {
-    public Tupleset Tupleset { get; set; }
+    public Tupleset Tupleset { get; init; }
     
-    public ComputedUserset ComputedUserset { get; set; }
+    public ComputedUserset ComputedUserset { get; init; }
 }

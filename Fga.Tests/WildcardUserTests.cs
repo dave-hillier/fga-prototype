@@ -1,3 +1,5 @@
+using Fga.Core;
+
 namespace Fga.Tests;
 
 public class WildcardUserTests

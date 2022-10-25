@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fga.Tests", "Fga.Tests\Fga.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fga.Core", "Fga.Core\Fga.Core.csproj", "{F460A764-7CC4-4199-B26E-A4A890624532}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fga.Api", "Fga.Api\Fga.Api.csproj", "{83305AA4-8050-4BCF-AE2A-01E8DF77429B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{F460A764-7CC4-4199-B26E-A4A890624532}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F460A764-7CC4-4199-B26E-A4A890624532}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F460A764-7CC4-4199-B26E-A4A890624532}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83305AA4-8050-4BCF-AE2A-01E8DF77429B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83305AA4-8050-4BCF-AE2A-01E8DF77429B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83305AA4-8050-4BCF-AE2A-01E8DF77429B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83305AA4-8050-4BCF-AE2A-01E8DF77429B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
