@@ -5,7 +5,7 @@ public class AuthorizationSystem
     private readonly HashSet<RelationTuple> _all = new();
     
     private readonly HashSet<RelationTuple> _groupToGroupCache = new();
-    private IEnumerable<RelationTuple> GroupToGroup => _groupToGroupCache.Union(_all.Where(t => t.User is not User.UserId));
+    private IEnumerable<RelationTuple> GroupToGroup => _groupToGroupCache;//_all.Where(t => t.User is not User.UserId);
 
     private readonly AuthorizationModel _model;
  
@@ -93,11 +93,13 @@ public class AuthorizationSystem
         if (computedUserset != null)
         {
             var userSet = GetDirectUserset(user);
-            return ModifyRelation(userSet, relation, computedUserset.Relation);
+            
+            return from t in userSet
+                where t.Relation == computedUserset.Relation
+                select (t.Object, relation);
         }
 
         var tupleToUserset = child.TupleToUserset;
-        
         if (tupleToUserset == null) 
             return Array.Empty<(RelationObject Object, string Relation)>();
 
@@ -123,16 +125,6 @@ public class AuthorizationSystem
             from t in GetUserset(user, computedUserset, obj)
             where t.Relation == computedUserset && t.Object == obj
             select (@object, relation);
-    }
-
-    private static IEnumerable<(RelationObject Object, string Relation)> ModifyRelation(
-        IEnumerable<(RelationObject Object, string Relation)> userSet,
-        string targetRelation,
-        string computedRelation)
-    {
-        return from t in userSet
-            where t.Relation == computedRelation
-            select (t.Object, relation: targetRelation);
     }
 
     private IEnumerable<(RelationObject Object, string Relation)> GetDirectUserset(User user)
