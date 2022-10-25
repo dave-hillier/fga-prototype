@@ -13,7 +13,6 @@ public class AuthorizationSystem
     public void Write(params RelationTuple[] tuples)
     {
         foreach (var relationTuple in tuples) _all.Add(relationTuple);
-        
     }
     
     public void Delete(params RelationTuple[] removedTuples)
@@ -41,7 +40,7 @@ public class AuthorizationSystem
 
         if (rel.This != null)
         {
-            return GetDirectUserset(user);
+            return GetUsersDirectGroups(user);
         }
         
         return rel.Union is not {Child: { }} ? 
@@ -54,13 +53,13 @@ public class AuthorizationSystem
     {
         if (child.This != null)
         {
-            return GetDirectUserset(user);
+            return GetUsersDirectGroups(user);
         }
 
         var computedUserset = child.ComputedUserset;
         if (computedUserset != null)
         {
-            var userSet = GetDirectUserset(user);
+            var userSet = GetUsersDirectGroups(user);
             
             return from t in userSet
                 where t.Relation == computedUserset.Relation
@@ -95,7 +94,7 @@ public class AuthorizationSystem
             select (@object, relation);
     }
 
-    private IEnumerable<(RelationObject Object, string Relation)> GetDirectUserset(User user)
+    private IEnumerable<(RelationObject Object, string Relation)> GetUsersDirectGroups(User user)
     {
         return from t in _all
             where t.User == user || t.User == User.Wildcard
