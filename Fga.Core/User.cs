@@ -30,4 +30,9 @@ public record User
     {
         return userString.Contains('#') ? UserSet.Parse(userString) : new UserId(userString);
     }
+
+    public RelationObject ToRelationObject()
+    {
+        return RelationObject.Parse(ToString());
+    }
 }

@@ -4,8 +4,8 @@ public class AuthorizationSystem
 {
     private readonly HashSet<RelationTuple> _all = new();
     
-    private readonly HashSet<RelationTuple> _flattenedGroups = new();
-    private IEnumerable<RelationTuple> GroupToGroup => _flattenedGroups.Union(_all.Where(t => t.User is not User.UserId));
+    private readonly HashSet<RelationTuple> _groupToGroupCache = new();
+    private IEnumerable<RelationTuple> GroupToGroup => _groupToGroupCache.Union(_all.Where(t => t.User is not User.UserId));
 
     private readonly AuthorizationModel _model;
  
@@ -25,15 +25,11 @@ public class AuthorizationSystem
     {
         foreach (var relationTuple in removedTuples) _all.Remove(relationTuple);
 
-        UpdateCache();
-    }
-
-    private void UpdateCache()
-    {
-        _flattenedGroups.Clear();
+        // Clear the cache & rebuild
+        _groupToGroupCache.Clear();
         AddTuplesToCache(_all);
     }
-    
+
     private void AddTuplesToCache(IEnumerable<RelationTuple> tuples)
     {
         var groups = tuples.Where(t => t.User is not User.UserId);
@@ -53,7 +49,7 @@ public class AuthorizationSystem
                 select new RelationTuple(toInsert.Object, toInsert.Relation, t.User);
 
             tuples = objSet.ToArray();
-            foreach (var tuple in tuples) _flattenedGroups.Add(tuple);
+            foreach (var tuple in tuples) _groupToGroupCache.Add(tuple);
         }
     }
 
@@ -123,9 +119,9 @@ public class AuthorizationSystem
             select t.User;
 
         return from userSet in groupsForObject
-            let obj = RelationObject.Parse(userSet.ToString()) // TODO: convert without strings
+            let obj = userSet.ToRelationObject()
             from t in GetUserset(user, computedUserset, obj)
-            where t.Relation == computedUserset && t.Object.ToString() == userSet.ToString()
+            where t.Relation == computedUserset && t.Object == obj
             select (@object, relation);
     }
 
