@@ -112,4 +112,19 @@ public class RelationTests
         
         Assert.True(_system.Check(new User.UserId("kuba"), "editor", new RelationObject("doc", "123")));
     }
+    
+        
+    [Fact]
+    public void CycleTest()
+    {
+        _system.Write(
+            RelationTuple.Parse("team:sugoi#member@kuba"),
+            RelationTuple.Parse("team:labs#member@dave"),
+            RelationTuple.Parse("team:labs#member@team:sugoi#member"),
+            RelationTuple.Parse("team:sugoi#member@team:labs#member")
+        );
+        
+        Assert.True(_system.Check(new User.UserId("kuba"), "member", new RelationObject("team", "labs")));
+        Assert.True(_system.Check(new User.UserId("dave"), "member", new RelationObject("team", "sugoi")));
+    }
 }
