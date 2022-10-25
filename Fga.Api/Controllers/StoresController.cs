@@ -16,8 +16,8 @@ public class StoresController : ControllerBase
         _authorizationSystem = authorizationSystem;
     }
 
-    [HttpPost("write")]
-    public IActionResult Write([FromBody]WriteRequest writeRequest)
+    [HttpPost("{store}/write")]
+    public IActionResult Write(string store, [FromBody]WriteRequest writeRequest)
     {
         if (writeRequest.Writes.TupleKeys.Any())
         {
@@ -32,8 +32,8 @@ public class StoresController : ControllerBase
         return Accepted();
     }
     
-    [HttpGet("check")]
-    public CheckResponse Check(CheckRequest request)
+    [HttpGet("{store}/check")]
+    public CheckResponse Check(string store, [FromBody]CheckRequest request)
     {
         var requestTupleKey = request.TupleKey;
         var result = _authorizationSystem.Check(requestTupleKey.User, requestTupleKey.Relation, requestTupleKey.Object);

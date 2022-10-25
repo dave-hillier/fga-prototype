@@ -4,10 +4,9 @@ public class AuthorizationSystem
 {
     private readonly HashSet<RelationTuple> _all = new();
     
-    private readonly HashSet<RelationTuple> _groupToGroupCache = new();
-    private IEnumerable<RelationTuple> GroupToGroup => _groupToGroupCache;//_all.Where(t => t.User is not User.UserId);
-
     private readonly AuthorizationModel _model;
+    
+    private readonly Group2GroupCache _leopardCache = new();
  
     public AuthorizationSystem(AuthorizationModel authorizationModel)
     {
@@ -17,40 +16,15 @@ public class AuthorizationSystem
     public void Write(params RelationTuple[] tuples)
     {
         foreach (var relationTuple in tuples) _all.Add(relationTuple);
-
-        AddTuplesToCache(tuples);
+        
+        _leopardCache.Add(tuples);
     }
     
     public void Delete(params RelationTuple[] removedTuples)
     {
         foreach (var relationTuple in removedTuples) _all.Remove(relationTuple);
 
-        // Clear the cache & rebuild
-        _groupToGroupCache.Clear();
-        AddTuplesToCache(_all);
-    }
-
-    private void AddTuplesToCache(IEnumerable<RelationTuple> tuples)
-    {
-        var groups = tuples.Where(t => t.User is not User.UserId);
-
-        AddGroup2GroupCache(groups.ToArray());
-    }
-
-    private void AddGroup2GroupCache(RelationTuple[] tuples)
-    {
-        while (tuples.Any())
-        {
-            var objSet = from toInsert in tuples
-                from t in GroupToGroup
-                where t != toInsert
-                let userSet = toInsert.User as User.UserSet
-                where t.Object == userSet.Object
-                select new RelationTuple(toInsert.Object, toInsert.Relation, t.User);
-
-            tuples = objSet.ToArray();
-            foreach (var tuple in tuples) _groupToGroupCache.Add(tuple);
-        }
+        _leopardCache.Remove(removedTuples, _all);
     }
 
     public bool Check(User user, string relation, RelationObject @object)
