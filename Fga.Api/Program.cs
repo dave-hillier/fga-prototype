@@ -36,8 +36,7 @@ builder.Services.AddSwaggerGen(c =>
             {
                 Scopes = new Dictionary<string, string>
                 {
-                    { "subscribe:topics", "Subscribe" },
-                    { "list:topics", "List Topics" }
+                    { "write:tuples", "Write Permissions Tuple" }
                 },
                 AuthorizationUrl = new Uri(configuration["Authentication:Authority"] + "authorize?audience=" + configuration["Authentication:Audience"]),
                 TokenUrl = new Uri($"{configuration["Authentication:Authority"]}oauth/token")
