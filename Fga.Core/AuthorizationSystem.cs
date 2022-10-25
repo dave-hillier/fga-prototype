@@ -3,11 +3,8 @@ namespace Fga.Core;
 public class AuthorizationSystem
 {
     private readonly HashSet<RelationTuple> _all = new();
-    
     private readonly AuthorizationModel _model;
-    
-    private readonly Group2GroupCache _leopardCache = new();
- 
+
     public AuthorizationSystem(AuthorizationModel authorizationModel)
     {
         _model = authorizationModel;
@@ -17,14 +14,11 @@ public class AuthorizationSystem
     {
         foreach (var relationTuple in tuples) _all.Add(relationTuple);
         
-        _leopardCache.Add(tuples);
     }
     
     public void Delete(params RelationTuple[] removedTuples)
     {
         foreach (var relationTuple in removedTuples) _all.Remove(relationTuple);
-
-        _leopardCache.Remove(removedTuples, _all);
     }
 
     public bool Check(User user, string relation, RelationObject @object)
