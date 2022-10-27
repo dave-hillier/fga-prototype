@@ -1,0 +1,23 @@
+{
+  "type_definitions": [
+    {
+      "type": "team",
+      "relations": {
+        "member": {
+          "this": {}
+        }
+      }
+    },
+    {
+      "type": "doc",
+      "relations": {
+        "editor": {
+          "this": {}
+        },
+        "viewer": {
+          "this": {}
+        }
+      }
+    }
+  ]
+}

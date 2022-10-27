@@ -1,38 +1,44 @@
 using Fga.Core;
+using Newtonsoft.Json;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Fga.Tests;
 
 public class RelationTests
 {
     private readonly AuthorizationSystem _system = new(
-        new AuthorizationModel
-        {
-            TypeDefinitions = new[]
-            {
-                new TypeDefinition
-                {
-                    Type = "team",
-                    Relations = new Dictionary<string, Relation>
-                    {
-                        { "member", new Relation {This = new This()} }
-                    }
-                },
-                new TypeDefinition
-                {
-                    Type = "doc",
-                    Relations = new Dictionary<string, Relation>
-                    {
-                        { "editor", new Relation {This = new This()} },
-                        { "viewer", new Relation {This = new This()} }
-                    }
-                },
-            }
-        }
+        _authorizationModel
     );
+
+    private static AuthorizationModel _authorizationModel = new AuthorizationModel
+    {
+        TypeDefinitions = new[]
+        {
+            new TypeDefinition
+            {
+                Type = "team",
+                Relations = new Dictionary<string, Relation>
+                {
+                    { "member", new Relation {This = new This()} }
+                }
+            },
+            new TypeDefinition
+            {
+                Type = "doc",
+                Relations = new Dictionary<string, Relation>
+                {
+                    { "editor", new Relation {This = new This()} },
+                    { "viewer", new Relation {This = new This()} }
+                }
+            },
+        }
+    };
 
     [Fact]
     public void Empty()
     {
+        Console.Write(JsonSerializer.Serialize(_authorizationModel));
+        
         Assert.False(_system.Check(new User.UserId("dave"), "member", new RelationObject("team", "labs")));
     }
 
@@ -126,5 +132,8 @@ public class RelationTests
         
         Assert.True(_system.Check(new User.UserId("kuba"), "member", new RelationObject("team", "labs")));
         Assert.True(_system.Check(new User.UserId("dave"), "member", new RelationObject("team", "sugoi")));
+        
+        Assert.False(_system.Check(new User.UserId("kuba1"), "member", new RelationObject("team", "labs")));
+        Assert.False(_system.Check(new User.UserId("dave1"), "member", new RelationObject("team", "sugoi")));
     }
 }

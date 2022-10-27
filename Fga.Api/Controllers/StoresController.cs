@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Fga.Api.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("[controller]/{store}")]
 public class StoresController : ControllerBase
 {
     private readonly ILogger<StoresController> _logger;
@@ -16,7 +16,7 @@ public class StoresController : ControllerBase
         _authorizationSystem = authorizationSystem;
     }
 
-    [HttpPost("{store}/write")]
+    [HttpPost("write")]
     public IActionResult Write(string store, [FromBody]WriteRequest writeRequest)
     {
         if (writeRequest.Writes.TupleKeys.Any())
@@ -32,7 +32,7 @@ public class StoresController : ControllerBase
         return Accepted();
     }
     
-    [HttpGet("{store}/check")]
+    [HttpPost("check")]
     public CheckResponse Check(string store, [FromBody]CheckRequest request)
     {
         var requestTupleKey = request.TupleKey;

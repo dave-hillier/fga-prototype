@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+
 namespace Fga.Core;
 
 public class AuthorizationSystem

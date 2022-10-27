@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Fga.Core;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
@@ -20,7 +21,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
-builder.Services.AddSingleton<AuthorizationSystem>();
+var authorizationModel = JsonSerializer.Deserialize<AuthorizationModel>(File.ReadAllText("model.json"));
+builder.Services.AddSingleton(new AuthorizationSystem(authorizationModel));
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
