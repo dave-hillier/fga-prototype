@@ -1,10 +1,8 @@
-using Microsoft.Extensions.Options;
-
 namespace Fga.Core;
 
 public class AuthorizationSystem
 {
-    private readonly HashSet<RelationTuple> _all = new();
+    private readonly HashSet<RelationTuple> _tuples = new();
     private readonly AuthorizationModel _model;
 
     public AuthorizationSystem(AuthorizationModel authorizationModel)
@@ -14,40 +12,53 @@ public class AuthorizationSystem
 
     public void Write(params RelationTuple[] tuples)
     {
-        foreach (var relationTuple in tuples) _all.Add(relationTuple);
+        foreach (var relationTuple in tuples) _tuples.Add(relationTuple);
     }
     
     public void Delete(params RelationTuple[] removedTuples)
     {
-        foreach (var relationTuple in removedTuples) _all.Remove(relationTuple);
+        foreach (var relationTuple in removedTuples) _tuples.Remove(relationTuple);
     }
 
     public bool Check(User user, string relation, RelationObject @object)
     {
-        var groupsUserIsIn = GetUserset(user, relation, @object).ToHashSet();
-        
-        return groupsUserIsIn.Contains((@object, relation)) || 
-               groupsUserIsIn.Any(g => Check(g.Object.ToUserset(g.Relation), relation, @object));
+       if (_tuples.Contains(new RelationTuple(@object, relation, user)) || 
+           _tuples.Contains(new RelationTuple(@object, relation, User.Wildcard)))
+           return true;
+       
+       var groupsUserIsIn = GetUserset(user, relation, @object).ToHashSet();
+       return groupsUserIsIn.Contains((@object, relation)) || 
+              groupsUserIsIn.Any(g => Check(g.Object.ToUserset(g.Relation), relation, @object));
     }
 
-    private IEnumerable<(RelationObject Object, string Relation)> GetUserset(User user, string relation, RelationObject @object)
+    private static Relation GetRelation(string relation, TypeDefinition? type)
     {
-        var type = _model.TypeDefinitions.FirstOrDefault(m => m.Type == @object.Namespace);
-
         if (type == null)
             throw new Exception($"Unknown type: {type}");
 
         if (!type.Relations.TryGetValue(relation, out var rel))
             throw new Exception($"Unknown type: {relation}");
+        
+        return rel;
+    }
 
+    private IEnumerable<(RelationObject Object, string Relation)> GetUserset(User user, string relation, RelationObject @object)
+    {
+        var type = _model.TypeDefinitions.FirstOrDefault(m => m.Type == @object.Namespace);
+        var rel = GetRelation(relation, type);
+        return UsersGroups(user, relation, @object, rel);
+    }
+
+    private IEnumerable<(RelationObject Object, string Relation)> UsersGroups(User user, string relation, RelationObject @object, Relation rel)
+    {
         if (rel.This != null)
         {
             return GetUsersDirectGroups(user);
         }
-        
-        return rel.Union is not {Child: { }} ? 
-            Array.Empty<(RelationObject Object, string Relation)>() : 
-            rel.Union.Child.SelectMany(child => GetChildUserset(child, user, relation, @object));
+
+        return rel.Union is not {Child: { }}
+            ? Array.Empty<(RelationObject Object, string Relation)>()
+            : rel.Union.Child.SelectMany(child => GetChildUserset(child, user, relation, @object));
     }
 
     private IEnumerable<(RelationObject Object, string Relation)> GetChildUserset(Child child, User user,
@@ -85,7 +96,7 @@ public class AuthorizationSystem
         string tuplesetRelation,
         string computedUserset)
     {
-        var groupsForObject = from t in _all
+        var groupsForObject = from t in _tuples
             where t.Object == @object && t.Relation == tuplesetRelation 
             select t.User;
 
@@ -98,7 +109,7 @@ public class AuthorizationSystem
 
     private IEnumerable<(RelationObject Object, string Relation)> GetUsersDirectGroups(User user)
     {
-        return from t in _all
+        return from t in _tuples
             where t.User == user || t.User == User.Wildcard
             select (t.Object, t.Relation);
     }
