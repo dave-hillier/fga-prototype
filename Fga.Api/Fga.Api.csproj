@@ -12,11 +12,8 @@
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.5" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="6.0.5" />
         <PackageReference Include="Microsoft.Identity.Web" Version="1.16.0" />
+        <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\Fga.Core\Fga.Core.csproj" />
     </ItemGroup>
 
 </Project>

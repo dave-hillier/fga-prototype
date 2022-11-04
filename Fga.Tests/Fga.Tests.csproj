@@ -23,7 +23,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Fga.Api\Fga.Api.csproj" />
-      <ProjectReference Include="..\Fga.Core\Fga.Core.csproj" />
     </ItemGroup>
 
 </Project>
