@@ -1,4 +1,4 @@
-using Fga.Core;
+using Fga.Api.Core;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Fga.Api.Controllers;

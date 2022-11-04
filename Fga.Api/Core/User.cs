@@ -1,4 +1,4 @@
-namespace Fga.Core;
+namespace Fga.Api.Core;
 
 public record User
 {

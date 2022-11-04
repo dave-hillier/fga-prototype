@@ -1,7 +1,7 @@
 using System.Text.Json.Serialization;
 using Newtonsoft.Json;
 
-namespace Fga.Core;
+namespace Fga.Api.Core;
 
 // designed to be compatible with OpenFGA's schema, https://openfga.dev/
 // The mixture of snake and pascal case is strange 

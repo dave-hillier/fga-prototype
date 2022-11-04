@@ -1,4 +1,4 @@
-using Fga.Core;
+using Fga.Api.Core;
 
 namespace Fga.Tests;
 

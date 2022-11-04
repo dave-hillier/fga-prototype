@@ -1,4 +1,4 @@
-using Fga.Core;
+using Fga.Api.Core;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
