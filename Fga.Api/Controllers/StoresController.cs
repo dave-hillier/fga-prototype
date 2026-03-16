@@ -19,16 +19,16 @@ public class StoresController : ControllerBase
     [HttpPost("write")]
     public IActionResult Write(string store, [FromBody]WriteRequest writeRequest)
     {
-        if (writeRequest.Writes.TupleKeys.Any())
+        if (writeRequest.Writes?.TupleKeys?.Any() == true)
         {
             _authorizationSystem.Write(writeRequest.Writes.TupleKeys.ToArray());
         }
-        
-        if (writeRequest.Deletes.TupleKeys.Any())
+
+        if (writeRequest.Deletes?.TupleKeys?.Any() == true)
         {
             _authorizationSystem.Delete(writeRequest.Deletes.TupleKeys.ToArray());
         }
-        
+
         return Accepted();
     }
     

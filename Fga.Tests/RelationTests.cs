@@ -136,4 +136,16 @@ public class RelationTests
         Assert.False(_system.Check(new User.UserId("kuba1"), "member", new RelationObject("team", "labs")));
         Assert.False(_system.Check(new User.UserId("dave1"), "member", new RelationObject("team", "sugoi")));
     }
+
+    [Fact]
+    public void CycleWithNoMatchDoesNotStackOverflow()
+    {
+        _system.Write(
+            RelationTuple.Parse("team:a#member@team:b#member"),
+            RelationTuple.Parse("team:b#member@team:a#member")
+        );
+
+        Assert.False(_system.Check(new User.UserId("nobody"), "member", new RelationObject("team", "a")));
+        Assert.False(_system.Check(new User.UserId("nobody"), "member", new RelationObject("team", "b")));
+    }
 }
