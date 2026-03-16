@@ -14,7 +14,7 @@ public class AuthorizationSystem
     {
         foreach (var relationTuple in tuples) _tuples.Add(relationTuple);
     }
-    
+
     public void Delete(params RelationTuple[] removedTuples)
     {
         foreach (var relationTuple in removedTuples) _tuples.Remove(relationTuple);
@@ -22,30 +22,39 @@ public class AuthorizationSystem
 
     public bool Check(User user, string relation, RelationObject @object)
     {
-       if (_tuples.Contains(new RelationTuple(@object, relation, user)) || 
-           _tuples.Contains(new RelationTuple(@object, relation, User.Wildcard)))
-           return true;
-       
-       var groupsUserIsIn = GetUserset(user, relation, @object).ToHashSet();
-       return groupsUserIsIn.Contains((@object, relation)) || 
-              groupsUserIsIn.Any(g => Check(g.Object.ToUserset(g.Relation), relation, @object));
+        return Check(user, relation, @object, new HashSet<(User, string, RelationObject)>());
     }
 
-    private static Relation GetRelation(string relation, TypeDefinition? type)
+    private bool Check(User user, string relation, RelationObject @object,
+        HashSet<(User, string, RelationObject)> visited)
+    {
+        if (!visited.Add((user, relation, @object)))
+            return false;
+
+        if (_tuples.Contains(new RelationTuple(@object, relation, user)) ||
+           _tuples.Contains(new RelationTuple(@object, relation, User.Wildcard)))
+           return true;
+
+       var groupsUserIsIn = GetUserset(user, relation, @object).ToHashSet();
+       return groupsUserIsIn.Contains((@object, relation)) ||
+              groupsUserIsIn.Any(g => Check(g.Object.ToUserset(g.Relation), relation, @object, visited));
+    }
+
+    private static Relation GetRelation(string relation, string @namespace, TypeDefinition? type)
     {
         if (type == null)
-            throw new Exception($"Unknown type: {type}");
+            throw new Exception($"Unknown type: {@namespace}");
 
         if (!type.Relations.TryGetValue(relation, out var rel))
-            throw new Exception($"Unknown type: {relation}");
-        
+            throw new Exception($"Unknown relation: {relation} on type {@namespace}");
+
         return rel;
     }
 
     private IEnumerable<(RelationObject Object, string Relation)> GetUserset(User user, string relation, RelationObject @object)
     {
         var type = _model.TypeDefinitions.FirstOrDefault(m => m.Type == @object.Namespace);
-        var rel = GetRelation(relation, type);
+        var rel = GetRelation(relation, @object.Namespace, type);
         return UsersGroups(user, relation, @object, rel);
     }
 
@@ -73,35 +82,36 @@ public class AuthorizationSystem
         if (computedUserset != null)
         {
             var userSet = GetUsersDirectGroups(user);
-            
+
             return from t in userSet
-                where t.Relation == computedUserset.Relation
+                where t.Relation == computedUserset.Relation && t.Object == @object
                 select (t.Object, relation);
         }
 
         var tupleToUserset = child.TupleToUserset;
-        if (tupleToUserset == null) 
+        if (tupleToUserset == null)
             return Array.Empty<(RelationObject Object, string Relation)>();
 
-        return TupleToUserset(user, relation, @object, 
-            tupleToUserset.Tupleset.Relation, 
+        return TupleToUserset(user, relation, @object,
+            tupleToUserset.Tupleset.Relation,
             tupleToUserset.ComputedUserset.Relation);
 
     }
 
     private IEnumerable<(RelationObject Object, string Relation)> TupleToUserset(
-        User user, 
-        string relation, 
-        RelationObject @object, 
+        User user,
+        string relation,
+        RelationObject @object,
         string tuplesetRelation,
         string computedUserset)
     {
         var groupsForObject = from t in _tuples
-            where t.Object == @object && t.Relation == tuplesetRelation 
+            where t.Object == @object && t.Relation == tuplesetRelation
             select t.User;
 
         return from userSet in groupsForObject
-            let obj = userSet.ToRelationObject()
+            where userSet is User.UserSet
+            let obj = ((User.UserSet)userSet).Object
             from t in GetUserset(user, computedUserset, obj)
             where t.Relation == computedUserset && t.Object == obj
             select (@object, relation);
