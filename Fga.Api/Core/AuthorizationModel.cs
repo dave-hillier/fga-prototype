@@ -24,6 +24,12 @@ public class Relation
     [JsonPropertyName("union")]
     public Union? Union { get; set; }
 
+    [JsonPropertyName("intersection")]
+    public Intersection? Intersection { get; set; }
+
+    [JsonPropertyName("exclusion")]
+    public Exclusion? Exclusion { get; set; }
+
     [JsonPropertyName("this")]
     public This? This { get; set; }
 }
@@ -32,6 +38,21 @@ public class Union
 {
     [JsonPropertyName("child")]
     public Child[]? Child { get; init; }
+}
+
+public class Intersection
+{
+    [JsonPropertyName("child")]
+    public Child[]? Child { get; init; }
+}
+
+public class Exclusion
+{
+    [JsonPropertyName("base")]
+    public Child Base { get; init; }
+
+    [JsonPropertyName("subtract")]
+    public Child Subtract { get; init; }
 }
 
 public class Child

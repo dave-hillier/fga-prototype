@@ -19,19 +19,28 @@ public class StoresController : ControllerBase
     [HttpPost("write")]
     public IActionResult Write(string store, [FromBody]WriteRequest writeRequest)
     {
-        if (writeRequest.Writes?.TupleKeys?.Any() == true)
+        try
         {
-            _authorizationSystem.Write(writeRequest.Writes.TupleKeys.ToArray());
-        }
+            if (writeRequest.Writes?.TupleKeys?.Any() == true)
+            {
+                var tuples = writeRequest.Writes.TupleKeys.ToArray();
+                _authorizationSystem.ValidateWrite(tuples);
+                _authorizationSystem.Write(tuples);
+            }
 
-        if (writeRequest.Deletes?.TupleKeys?.Any() == true)
+            if (writeRequest.Deletes?.TupleKeys?.Any() == true)
+            {
+                _authorizationSystem.Delete(writeRequest.Deletes.TupleKeys.ToArray());
+            }
+
+            return Accepted();
+        }
+        catch (ValidationException ex)
         {
-            _authorizationSystem.Delete(writeRequest.Deletes.TupleKeys.ToArray());
+            return BadRequest(new { error = ex.Message });
         }
-
-        return Accepted();
     }
-    
+
     [HttpPost("check")]
     public CheckResponse Check(string store, [FromBody]CheckRequest request)
     {
@@ -39,10 +48,30 @@ public class StoresController : ControllerBase
         var result = _authorizationSystem.Check(requestTupleKey.User, requestTupleKey.Relation, requestTupleKey.Object);
         return new CheckResponse(Allowed: result);
     }
+
+    [HttpPost("expand")]
+    public ExpandResponse Expand(string store, [FromBody]ExpandRequest request)
+    {
+        var tree = _authorizationSystem.Expand(request.Relation, request.Object);
+        return new ExpandResponse(Tree: tree);
+    }
+
+    [HttpPost("list-objects")]
+    public ListObjectsResponse ListObjects(string store, [FromBody]ListObjectsRequest request)
+    {
+        var objects = _authorizationSystem.ListObjects(request.User, request.Relation, request.Type);
+        return new ListObjectsResponse(Objects: objects.Select(o => o.ToString()).ToList());
+    }
 }
 
 public record CheckRequest(RelationTuple TupleKey);
 public record CheckResponse(bool Allowed);
+
+public record ExpandRequest(string Relation, RelationObject Object);
+public record ExpandResponse(UsersetTree Tree);
+
+public record ListObjectsRequest(User User, string Relation, string Type);
+public record ListObjectsResponse(IReadOnlyList<string> Objects);
 
 public class TupleContainer
 {
